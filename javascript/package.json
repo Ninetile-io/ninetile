@@ -1,6 +1,6 @@
 {
   "name": "ninetile",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Official JavaScript/TypeScript client for the Ninetile API: hCaptcha token solves and challenge recognition",
   "license": "MIT",
   "type": "module",

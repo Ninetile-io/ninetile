@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ninetile"
-version = "0.1.0"
+version = "0.1.1"
 description = "Official Python client for the Ninetile API: hCaptcha token solves and challenge recognition"
 readme = "README.md"
 requires-python = ">=3.9"
