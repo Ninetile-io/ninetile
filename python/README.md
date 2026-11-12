@@ -21,6 +21,15 @@ pip install ninetile
 
 Get a key at [ninetile.io/signup](https://ninetile.io/signup); the key (`nt_live_…`) is shown once. Every request sends `Authorization: Bearer nt_live_…`.
 
+## Browser identity
+
+Do not send a `user_agent`. The API refuses it with `422 validation_error` (`param: "user_agent"`)
+because a token is minted inside one coherent browser identity — User-Agent, Sec-CH-UA client hints
+and platform must agree — and an arbitrary string breaks that agreement. Submit the token with the
+`solve.user_agent` the API returns; an empty string is treated as omitted. The client passes unknown
+keyword fields through to the request body, so `client.solve(..., user_agent="...")` reaches the API
+and is refused.
+
 ## Quick start
 
 Sync:
