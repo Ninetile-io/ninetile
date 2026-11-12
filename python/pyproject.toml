@@ -1,0 +1,42 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ninetile"
+version = "0.1.0"
+description = "Official Python client for the Ninetile API: hCaptcha token solves and challenge recognition"
+readme = "README.md"
+requires-python = ">=3.9"
+license = "MIT"
+authors = [{ name = "Ninetile" }]
+keywords = ["hcaptcha", "captcha", "solver", "ninetile"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries",
+]
+dependencies = ["httpx>=0.27"]
+
+[project.optional-dependencies]
+test = ["pytest>=7.0", "pytest-asyncio>=0.23"]
+
+[project.urls]
+Homepage = "https://github.com/Ninetile-io/ninetile"
+Repository = "https://github.com/Ninetile-io/ninetile"
+Documentation = "https://ninetile.io/docs"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ninetile"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
