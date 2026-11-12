@@ -17,7 +17,7 @@ Official JavaScript/TypeScript client for the [Ninetile API](https://ninetile.io
 npm install ninetile
 ```
 
-`0.1.0` is the version in this repo; until it reaches npm, install from the repository instead: `npm install ./javascript`.
+For a version newer than the last release, `npm install ./javascript` installs straight from this repository.
 
 ## Quick start
 

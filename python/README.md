@@ -17,7 +17,7 @@ Official Python client for the [Ninetile API](https://ninetile.io/docs) — send
 pip install ninetile
 ```
 
-`0.1.0` is the version in this repo; until it reaches PyPI, install from the repository instead: `pip install ./python`. Requires Python 3.9+.
+Requires Python 3.9+. For a version newer than the last release, `pip install ./python` installs straight from this repository.
 
 Get a key at [ninetile.io/signup](https://ninetile.io/signup); the key (`nt_live_…`) is shown once. Every request sends `Authorization: Bearer nt_live_…`.
 
