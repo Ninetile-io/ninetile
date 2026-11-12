@@ -1,54 +1,47 @@
-# ninetile (JavaScript/TypeScript SDK)
+<div align="center">
 
-The official JavaScript/TypeScript client for the [Ninetile API](https://ninetile.io/docs) — send a sitekey and URL, get back a token your form can submit, or send a challenge's images and get back where to click.
+# ninetile
 
-Zero runtime dependencies; uses the global `fetch` (Node 18+). Ships ESM and CJS with type declarations.
+Official JavaScript/TypeScript client for the [Ninetile API](https://ninetile.io/docs) — send a sitekey and URL, get back a token your form can submit.
+
+[![CI](https://img.shields.io/github/actions/workflow/status/Ninetile-io/ninetile/test-js.yml?branch=main)](https://github.com/Ninetile-io/ninetile/actions/workflows/test-js.yml)
+[![npm version](https://img.shields.io/npm/v/ninetile)](https://www.npmjs.com/package/ninetile)
+[![Node](https://img.shields.io/node/v/ninetile)](https://www.npmjs.com/package/ninetile)
+[![License](https://img.shields.io/github/license/Ninetile-io/ninetile)](https://github.com/Ninetile-io/ninetile/blob/main/LICENSE)
+
+</div>
+
+## Install
 
 ```bash
-npm install ninetile  # 0.1.0 is the current release
+npm install ninetile
 ```
 
-Until 0.1.0 reaches npm, install from this repository instead: `npm install ./javascript`.
+`0.1.0` is the version in this repo; until it reaches npm, install from the repository instead: `npm install ./javascript`.
 
-Get a key at [ninetile.io/signup](https://ninetile.io/signup); the key (`nt_live_…`) is shown once. Every request sends `Authorization: Bearer nt_live_…`.
-
-## Token API
+## Quick start
 
 ```js
 import { NinetileClient } from 'ninetile';
 
 const client = new NinetileClient(); // reads NT_API_KEY
+
 const solve = await client.solve(
   '00000000-0000-0000-0000-000000000000',
   'https://target.example/login',
-  { wait: 30 }, // or omit and let it poll
+  { wait: 30 }, // omit to poll instead of holding the connection
 );
+
 console.log(solve.status, solve.token);
-// submit solve.token with the User-Agent solve.userAgent — tokens are single-use
 ```
 
-One solve costs **$0.00075** (charged only when it succeeds; failed work is free).
-`client.solve(...)` resolves once the solve is final and throws `SolveFailed` if it ends without a token (carrying `retryable` and `reason`). Failed work is never charged, so retry only when `retryable` is true — and only by calling `solve()` again: a retry is a new solve. Pass `wait` (1–90 seconds) to hold the create request open server-side, or use `client.getSolve(solve.id)` for manual polling. Reading the key from elsewhere? Pass `new NinetileClient({ apiKey, baseUrl, timeoutMs, fetch })` — `fetch` is injectable, so tests never touch the network.
-
-## Recognition API
-
-```js
-const result = await client.recognize({
-  type: 'hcaptcha',
-  task: 'Select all bicycles',
-  imageData: ['<BASE64_TILE_1>', '<BASE64_TILE_2>'], // or imageUrls: [...]
-});
-console.log(result.data); // one boolean per tile, in reading order
-```
-
-Use `type: 'hcaptcha_area_select'` with exactly one image for point challenges (`result.data` is a `{x, y, w, h}` box, `result.points` lists the points). For drag-and-drop and enterprise challenges, pass the full challenge form: `client.recognize({ data: { request_type: 'image_drag_drop', ... } })`.
-
-One recognition costs **$0.0003**, charged only when answered.
+Submit `solve.token` with the `User-Agent` from `solve.userAgent` — tokens are single-use and expire within minutes. Node 18+, zero runtime dependencies (global `fetch`), ESM and CJS. `client.recognize({ task, imageData, ... })` answers a challenge's images instead of minting a token.
 
 ## Errors
 
-Every non-2xx response has the same shape: `{"error": {code, message, param, request_id}}`. The SDK throws typed exceptions — `AuthenticationError` (401), `InsufficientCredits` (402), `RateLimited` (429, with `retryAfter`; honour `Retry-After`), `NinetileError` for everything else — each carrying `code`, `status` and `requestId` (quote `requestId`, or the `X-Request-Id` response header, when you contact support). A solve that was accepted can still end without a token: `SolveFailed` — never an HTTP error, and never charged. Polling past your deadline raises `SolveTimeout`.
+Every non-2xx response has the same shape: `{"error": {code, message, param, request_id}}`. The SDK throws typed exceptions — `AuthenticationError` (401), `InsufficientCredits` (402), `RateLimited` (429, with `retryAfter`; honour `Retry-After`), else `NinetileError` — each carrying `code`, `status` and `requestId` (quote `requestId` or the `X-Request-Id` header when you contact support). A solve can also end without a token: `SolveFailed`, with `retryable` and `reason` — never an HTTP error, and never charged.
 
-## Status and support
+## Links
 
-`GET https://api.ninetile.io/v1/status` is a public liveness check. Docs: [ninetile.io/docs](https://ninetile.io/docs) · API reference: [create-solve](https://ninetile.io/docs/api-reference/create-solve) · Dashboard: [ninetile.io/dashboard](https://ninetile.io/dashboard)
+- Docs: https://ninetile.io/docs
+- Dashboard: https://ninetile.io/dashboard

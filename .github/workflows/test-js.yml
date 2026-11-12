@@ -1,0 +1,32 @@
+# Runs the JavaScript/TypeScript SDK checks on Node 20 and 22 for every push and PR.
+
+name: Test JS SDK
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [20, 22]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          registry-url: https://registry.npmjs.org
+      - run: npm ci
+        working-directory: javascript
+      - run: npx tsc --noEmit
+        working-directory: javascript
+      - run: npm test
+        working-directory: javascript
+      - run: npm run build
+        working-directory: javascript
