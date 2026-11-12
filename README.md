@@ -1,117 +1,113 @@
-# Ninetile
+<div align="center">
+  <img src="docs/assets/ninetile-mark.svg" width="72" height="72" alt="Ninetile">
+  <h1>ninetile</h1>
+  <p>hCaptcha tokens and recognition answers through one API.</p>
 
-Ninetile is an hCaptcha API: send a sitekey and URL, get back a token your form can submit — or send a challenge's images, get back where to click.
+  <a href="https://github.com/Ninetile-io/ninetile/actions/workflows/test-python.yml"><img src="https://img.shields.io/github/actions/workflow/status/Ninetile-io/ninetile/test-python.yml?branch=main&label=python" alt="Python CI"></a>
+  <a href="https://github.com/Ninetile-io/ninetile/actions/workflows/test-js.yml"><img src="https://img.shields.io/github/actions/workflow/status/Ninetile-io/ninetile/test-js.yml?branch=main&label=javascript" alt="JavaScript CI"></a>
+  <a href="https://pypi.org/project/ninetile/"><img src="https://img.shields.io/pypi/v/ninetile" alt="PyPI version"></a>
+  <a href="https://www.npmjs.com/package/ninetile"><img src="https://img.shields.io/npm/v/ninetile" alt="npm version"></a>
+  <a href="https://github.com/Ninetile-io/ninetile/blob/main/LICENSE"><img src="https://img.shields.io/github/license/Ninetile-io/ninetile" alt="License: MIT"></a>
+</div>
 
-This repository is the public home for the Ninetile API and its client libraries. Today it documents the API itself; `python/` and `javascript/` SDKs are being prepared in this repo and are **not published yet** (see [Roadmap](#roadmap)).
+Send a sitekey and URL, get back a `P1_` token your form can submit — or send a challenge's images and get back where to click.
 
-Documentation: [ninetile.io/docs](https://ninetile.io/docs) · Dashboard: [ninetile.io/dashboard](https://ninetile.io/dashboard)
-
-## Token API vs Recognition API
+## Two APIs
 
 | | Token API | Recognition API |
 |---|---|---|
-| What it does | Solves the challenge for you; returns a `P1_` token | Answers the challenge; returns tile selections / click points / drag boxes |
+| Returns | a `P1_` token, ready to submit | tile selections, click points or drag boxes |
 | Endpoint | `POST https://api.ninetile.io/v1/solves` | `POST https://api.ninetile.io/v1/recognize` |
-| For | Integrations that want a ready-to-submit token | Integrations that run their own browser and only need the answer |
+| For | integrations that want the whole challenge solved | integrations that run their own browser and only need the answer |
 | Price | **$0.75 per 1,000** successful tokens | **$0.30 per 1,000** successful answers |
-| Failed work | Free | Free |
 
-Prices are prepaid USD, charged only for work that succeeds. Failed, cancelled and expired solves and unanswerable puzzles cost nothing.
+Prepaid USD. Failed, cancelled and expired solves and unanswerable puzzles are never charged.
 
-## Getting a key
+## Install
 
-1. Create an account at [ninetile.io/signup](https://ninetile.io/signup).
-2. Add prepaid balance (top-ups are handled by the operator; see the dashboard billing page).
-3. Create an API key in the [dashboard](https://ninetile.io/dashboard). The key (`nt_live_…`) is shown once; only its hash is stored.
+```sh
+pip install ninetile          # Python 3.9+, httpx
+npm install ninetile          # Node 18+, zero dependencies
+```
 
-Every request sends the key as `Authorization: Bearer nt_live_…` (`x-api-key: nt_live_…` also works).
+Get a key from the [dashboard](https://ninetile.io/dashboard) — it is shown once and stored hashed. Send it as `Authorization: Bearer nt_live_…`.
 
-## Quickstart: Token API
+## Quick start
 
-```bash
+**Python** — sync or async, same surface:
+
+```python
+from ninetile import NinetileClient
+
+client = NinetileClient()                       # reads NT_API_KEY
+solve = client.solve("f5ab1c2d-7e8f-4a9b-b1c2-d3e4f5a6b7c8", "https://example.com/login", wait=30)
+
+print(solve.status, solve.token)                # solved P1_…
+print(solve.user_agent)                         # submit the token with exactly this
+```
+
+```python
+from ninetile import AsyncNinetileClient
+
+async with AsyncNinetileClient() as client:
+    solve = await client.solve("…", "https://example.com/login", wait=30)
+```
+
+**JavaScript / TypeScript**:
+
+```ts
+import { NinetileClient } from "ninetile";
+
+const client = new NinetileClient();             // reads NT_API_KEY
+const solve = await client.solve("f5ab1c2d-7e8f-4a9b-b1c2-d3e4f5a6b7c8", "https://example.com/login", { wait: 30 });
+
+console.log(solve.status, solve.token, solve.userAgent);
+```
+
+**curl**:
+
+```sh
 curl "https://api.ninetile.io/v1/solves?wait=30" \
   -H "Authorization: Bearer $NT_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"type":"hcaptcha","sitekey":"00000000-0000-0000-0000-000000000000","url":"https://target.example/login"}'
+  -d '{"type":"hcaptcha","sitekey":"f5ab1c2d-7e8f-4a9b-b1c2-d3e4f5a6b7c8","url":"https://example.com/login"}'
 ```
 
-`?wait=30` holds the connection for up to 90 seconds until the solve is final. Without it you get `202` immediately and poll `GET /v1/solves/{id}`. A solved response carries `token` and the `user_agent` the solve ran as — submit the token with exactly that User-Agent. Tokens are single-use and expire within minutes.
+Without `?wait` a create returns `202` with an id; poll `GET /v1/solves/{id}`. A solved response carries `token` and the `user_agent` the solve ran as — submit the token with exactly that User-Agent. Tokens are single-use and short-lived.
 
-## Quickstart: Recognition API
+## Browser identity
 
-```bash
-curl https://api.ninetile.io/v1/recognize \
-  -H "Authorization: Bearer $NT_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"type":"hcaptcha","task":"Select all bicycles","image_data":["<BASE64_TILE_1>","<BASE64_TILE_2>"]}'
-```
+Do not send a `user_agent`. A solve presents one coherent browser identity — User-Agent, `Sec-CH-UA` client hints and platform have to agree — so the API refuses a supplied one with `422 validation_error` (`param: "user_agent"`) rather than minting a token whose fingerprint contradicts itself. Submit the token with the `user_agent` the solve returns; an empty string is treated as omitted.
 
-`image_data` takes 1–27 base64 tiles in reading order (or `image_urls` with hCaptcha image URLs). The response `data` is one boolean per tile, in order:
-
-```json
-{ "id": "rec_…", "data": [true, false], "charged_usd": 0.0003 }
-```
-
-Use `type: "hcaptcha_area_select"` with exactly one image for point challenges. The full challenge form (`{"data": {…}}`) covers drag-and-drop and enterprise challenges — see the [docs](https://ninetile.io/docs/recognition-api).
-
-## Python
-
-```python
-import os, requests
-
-r = requests.post(
-    "https://api.ninetile.io/v1/solves",
-    params={"wait": 30},
-    headers={"Authorization": f"Bearer {os.environ['NT_API_KEY']}"},
-    json={"type": "hcaptcha",
-          "sitekey": "00000000-0000-0000-0000-000000000000",
-          "url": "https://target.example/login"},
-    timeout=95,
-)
-r.raise_for_status()
-solve = r.json()
-print(solve["status"], solve.get("token"))
-```
-
-## Node.js
-
-```js
-const axios = require("axios");
-
-const { data: solve } = await axios.post(
-  "https://api.ninetile.io/v1/solves?wait=30",
-  { type: "hcaptcha",
-    sitekey: "00000000-0000-0000-0000-000000000000",
-    url: "https://target.example/login" },
-  { headers: { Authorization: `Bearer ${process.env.NT_API_KEY}` }, timeout: 95000 },
-);
-console.log(solve.status, solve.token);
-```
+Tokens are minted from our egress IPs. A target that verifies the submitting IP (`remoteip`) can still reject a token hCaptcha itself considered valid — that is a limit of any hosted solver. If your target is strict about IP, pass your own `proxy`.
 
 ## Errors
 
 Every non-2xx response has the same shape:
 
 ```json
-{ "error": { "code": "insufficient_credits", "message": "…", "param": null, "request_id": "9f1c2d3e-…" } }
+{ "error": { "code": "insufficient_credits", "message": "…", "param": null, "request_id": "…" } }
 ```
 
-A request that was accepted can still end without a token: the solve comes back with `status: failed` and an `error` object (`code`, `message`, `reason`, `retryable`) — never an HTTP error, and never charged. Retry only failures marked `retryable`, and honour `Retry-After`. The full code table is in the [errors guide](https://ninetile.io/docs/errors-and-limits); `401 unauthorized` means a missing or wrong key.
+An accepted solve can still end without a token: it comes back with `status: failed` and an `error` object carrying `code`, `message`, `reason` and `retryable` — never an HTTP error, and never charged. Retry only when `retryable`, and honour `Retry-After`.
 
-Responses carry `X-Request-Id` — quote it when you contact support.
+## SDKs
 
-## Coming from another solver
+| Language | Package | Source |
+|---|---|---|
+| Python | [`ninetile`](https://pypi.org/project/ninetile/) | [`python/`](python/) |
+| JavaScript / TypeScript | [`ninetile`](https://www.npmjs.com/package/ninetile) | [`javascript/`](javascript/) |
 
-The same key works on the compatibility routes: `…/compat/2captcha` (`in.php`/`res.php`), `…/compat/capsolver` (also `/compat/anticaptcha`, `/compat/capmonster`), and `…/compat/nopecha`. Only hCaptcha task types are served; other types are refused in the dialect's own error format.
+Both handle polling, timeouts and the error taxonomy, and both refuse to retry a create call — a retry is a new solve and a new charge.
 
-## Roadmap
+## Compatibility routes
 
-- `python/` — official `ninetile` package for PyPI (requests-based, like the snippets above). In this repo, not published yet.
-- `javascript/` — official `ninetile` package for npm. In this repo, not published yet.
-- `extension/` — Chrome extension. Not available; the site announces it when it ships.
+The same key works on `/compat/2captcha` (`in.php`/`res.php`), `/compat/capsolver`, `/compat/anticaptcha`, `/compat/capmonster` and `/compat/nopecha`. Only hCaptcha task types are served; anything else is refused in that dialect's own error format.
 
-When the packages publish, this section will change and install instructions will appear here. Until then, the curl/requests/axios examples above are the supported integration path.
+## Documentation
 
-## Status and support
+[ninetile.io/docs](https://ninetile.io/docs) · [API reference](https://ninetile.io/docs/api-reference/create-solve) · [Dashboard](https://ninetile.io/dashboard) · [Status](https://api.ninetile.io/v1/status)
 
-`GET https://api.ninetile.io/v1/status` is a public liveness check. Docs: [ninetile.io/docs](https://ninetile.io/docs) · API reference: [ninetile.io/docs/api-reference/create-solve](https://ninetile.io/docs/api-reference/create-solve) · Dashboard: [ninetile.io/dashboard](https://ninetile.io/dashboard)
+## License
+
+MIT — see [LICENSE](LICENSE).
