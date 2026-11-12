@@ -43,9 +43,23 @@ class Solve:
         Polls with exponential backoff (starting at ``poll_interval`` seconds,
         doubling, capped at 10s) and honours ``Retry-After`` on 429 responses.
         Raises :class:`SolveFailed` if the solve produced no token, and
-        :class:`SolveTimeout` if ``timeout`` seconds pass first.
+        :class:`SolveTimeout` if ``timeout`` seconds pass first. Only valid for
+        solves created with :class:`NinetileClient`; use :meth:`wait_async` on a
+        :class:`AsyncNinetileClient`.
         """
+        if getattr(self._client, "is_async", False):
+            raise RuntimeError(
+                "wait() cannot block on an async solve; use `await solve.wait_async(...)`."
+            )
         return self._client._poll(self, poll_interval=poll_interval, timeout=timeout)
+
+    async def wait_async(self, *, poll_interval=2.0, timeout=180.0):
+        """Async counterpart of :meth:`wait`; same backoff, same semantics."""
+        if not getattr(self._client, "is_async", False):
+            raise RuntimeError(
+                "wait_async() needs a solve created with AsyncNinetileClient; use wait()."
+            )
+        return await self._client._poll_async(self, poll_interval=poll_interval, timeout=timeout)
 
     def __repr__(self):
         return f"<ninetile.Solve id={self.id} status={self.status}>"
