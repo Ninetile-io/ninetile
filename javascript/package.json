@@ -1,0 +1,52 @@
+{
+  "name": "ninetile",
+  "version": "0.1.0",
+  "description": "Official JavaScript/TypeScript client for the Ninetile API: hCaptcha token solves and challenge recognition",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Ninetile-io/ninetile.git",
+    "directory": "javascript"
+  },
+  "homepage": "https://github.com/Ninetile-io/ninetile/tree/main/javascript",
+  "bugs": "https://github.com/Ninetile-io/ninetile/issues",
+  "keywords": [
+    "hcaptcha",
+    "captcha",
+    "solver",
+    "ninetile"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.6.0",
+    "vitest": "^3.0.0"
+  }
+}

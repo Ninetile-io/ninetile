@@ -1,0 +1,68 @@
+# Publishes the `ninetile` npm package (from javascript/) on a `v*` tag.
+#
+# NOTE: the FIRST release has to be published manually, because npm cannot attach
+# a trusted publisher to a package that does not exist yet. Publish 0.1.0 once by
+# hand from javascript/ (`npm publish --access public`), then configure the
+# trusted publisher on npmjs.com (Package settings → Publishing access → Trusted
+# publishers → GitHub Actions: repository Ninetile-io/ninetile, workflow
+# publish-js.yml). From then on this workflow takes over.
+#
+# Authentication is OIDC trusted publishing: no npm token is stored. It requires
+# id-token: write, Node 24 and npm CLI >= 11.5.1, which is why npm is upgraded
+# before publishing.
+
+name: Publish JS SDK
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Type exactly "publish" to publish to npm; anything else only builds'
+        required: true
+        default: 'build'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - run: npm install -g npm@^11.5.1
+      - run: npm ci
+        working-directory: javascript
+      - run: npm run typecheck
+        working-directory: javascript
+      - run: npm test
+        working-directory: javascript
+      - run: npm run build
+        working-directory: javascript
+
+  publish:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v') || inputs.publish == 'publish'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # OIDC trusted publishing; no stored token
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - run: npm install -g npm@^11.5.1
+      - run: npm ci
+        working-directory: javascript
+      - run: npm run build
+        working-directory: javascript
+      - run: npm publish --access public
+        working-directory: javascript
